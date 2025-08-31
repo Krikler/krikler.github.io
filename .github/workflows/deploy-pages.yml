@@ -16,14 +16,67 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-      - name: Install dependencies
-        run: npm ci || npm install --no-audit --no-fund
-      - name: Build
-        run: npm run build --if-present
+      - name: Prepare site for Pages
+        run: |
+          # create a clean output folder at repo root that we'll upload to Pages
+          OUT="$GITHUB_WORKSPACE/out_pages"
+          rm -rf "$OUT"
+          mkdir -p "$OUT"
+
+          # find a package.json (ignore .github and node_modules). limit depth to avoid scanning large trees.
+          PKG_PATH=$(find . -maxdepth 4 -type f -name package.json -not -path "./.github/*" -not -path "./node_modules/*" | head -n 1 || true)
+
+          if [ -n "$PKG_PATH" ]; then
+            PKG_DIR=$(dirname "$PKG_PATH")
+            echo "Found package.json in: $PKG_DIR"
+
+            # install + build inside the package directory
+            pushd "$PKG_DIR"
+            echo "Attempting npm ci (fallback to npm install if no lockfile)"
+            if npm ci 2>/tmp/npmci.err; then
+              echo "npm ci succeeded"
+            else
+              echo "npm ci failed, showing brief error and falling back to npm install"
+              tail -n 200 /tmp/npmci.err || true
+              npm install --no-audit --no-fund
+            fi
+
+            echo "Running build script if present"
+            npm run build --if-present
+            popd
+
+            # prefer build/ then dist/ from the package dir
+            if [ -d "$PKG_DIR/build" ]; then
+              echo "Copying $PKG_DIR/build -> $OUT"
+              cp -a "$PKG_DIR/build/." "$OUT/"
+            elif [ -d "$PKG_DIR/dist" ]; then
+              echo "Copying $PKG_DIR/dist -> $OUT"
+              cp -a "$PKG_DIR/dist/." "$OUT/"
+            else
+              echo "No build output in $PKG_DIR; copying repo root into $OUT (excluding .github and .git)"
+              rsync -a --exclude='.github' --exclude='.git' "$GITHUB_WORKSPACE/" "$OUT"
+            fi
+
+          else
+            # no package.json found; fall back to existing build/dist at repo root or copy repo
+            if [ -d build ]; then
+              echo "No package.json found but build/ exists at repo root — using build/"
+              cp -a build/. "$OUT/"
+            elif [ -d dist ]; then
+              echo "No package.json found but dist/ exists at repo root — using dist/"
+              cp -a dist/. "$OUT/"
+            else
+              echo "No package.json and no build/ — copying repo root (excluding .github/.git) into output"
+              rsync -a --exclude='.github' --exclude='.git' "$GITHUB_WORKSPACE/" "$OUT"
+            fi
+          fi
+
+          echo "Output directory contents:"
+          ls -la "$OUT" | sed -n '1,200p'
       - name: Upload artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v4
         with:
-          path: build
+          path: out_pages
 
   deploy:
     needs: build
