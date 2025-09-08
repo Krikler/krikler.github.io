@@ -20,3 +20,7 @@ npm run build
 npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Credits
+
+Design inspired by [Brittany Chiang](https://brittanychiang.com) and [meikopoulos.com](https://meikopoulos.com).
