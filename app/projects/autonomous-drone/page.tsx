@@ -64,7 +64,7 @@ export default function AutonomousDroneProject() {
               </tr>
               <tr className="border-b border-muted-foreground">
                 <th className="py-2 px-4 font-semibold bg-muted">Raspberry Pi Operating System</th>
-                <td className="py-2 px-4">Ubuntu 22.04</td>
+                <td className="py-2 px-4">Ubuntu 24.04</td>
               </tr>
               <tr className="border-b border-muted-foreground">
                 <th className="py-2 px-4 font-semibold bg-muted">Frame</th>
@@ -103,7 +103,7 @@ export default function AutonomousDroneProject() {
         </div>
         <h3 className="text-xl font-semibold mb-2">Technologies Used</h3>
         <ul className="list-disc list-inside mb-4">
-          <li>Raspberry Pi 5 with Ubuntu 22.04</li>
+          <li>Raspberry Pi 5 with Ubuntu 24.04</li>
           <li>Ardupilot, Mavlink, Mavros</li>
           <li>ROS2 (Robot Operating System)</li>
           <li>C++</li>
